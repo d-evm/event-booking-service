@@ -1,5 +1,7 @@
 package com.ticketing.eventbooking.auth.controller;
 
+import com.ticketing.eventbooking.auth.dto.LoginRequest;
+import com.ticketing.eventbooking.auth.dto.LoginResponse;
 import com.ticketing.eventbooking.auth.dto.RegisterUserRequest;
 import com.ticketing.eventbooking.auth.dto.RegisterUserResponse;
 import com.ticketing.eventbooking.auth.service.AuthService;
@@ -22,7 +24,14 @@ public class AuthController {
     public ResponseEntity<RegisterUserResponse> register(
             @Valid @RequestBody RegisterUserRequest request
     ) {
-        RegisterUserResponse response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(authService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }

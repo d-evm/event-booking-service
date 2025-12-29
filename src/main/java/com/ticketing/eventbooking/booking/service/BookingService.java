@@ -1,5 +1,7 @@
 package com.ticketing.eventbooking.booking.service;
 
+import com.ticketing.eventbooking.booking.event.BookingConfirmedEvent;
+import com.ticketing.eventbooking.booking.event.BookingEventPublisher;
 import com.ticketing.eventbooking.booking.model.Booking;
 import com.ticketing.eventbooking.booking.model.ShowSeat;
 import com.ticketing.eventbooking.booking.repository.BookingRepository;
@@ -14,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -23,38 +24,66 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
+    private final BookingEventPublisher eventPublisher;
 
     public BookingService(
             ShowSeatRepository showSeatRepository,
             BookingRepository bookingRepository,
             ShowRepository showRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            BookingEventPublisher eventPublisher
     ) {
         this.showSeatRepository = showSeatRepository;
         this.bookingRepository = bookingRepository;
         this.showRepository = showRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public Booking bookSeats(
             UUID userId,
             UUID showId,
-            List<UUID> seatIds
+            List<UUID> showSeatIds
     ) {
-        List<ShowSeat> seats = showSeatRepository.findAndLockSeats(showId, seatIds);
+        // lock seats for this show
+        List<ShowSeat> seats =
+                showSeatRepository.findAndLockSeats(showId, showSeatIds);
 
+        // validate all requested seats were found and locked
+        if (seats.size() != showSeatIds.size()) {
+            throw new IllegalStateException(
+                    "One or more selected seats are no longer available"
+            );
+        }
+
+        // Mark seats as booked
         seats.forEach(ShowSeat::lock);
-
         seats.forEach(ShowSeat::book);
 
+        // Fetch show & user
         Show show = showRepository.findById(showId)
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("Show not found"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        Booking booking = new Booking(user, show, Set.copyOf(seats));
-        return bookingRepository.save(booking);
+        // Create booking
+        Booking booking = bookingRepository.save(
+                new Booking(user, show, Set.copyOf(seats))
+        );
+
+        // publish async confirmation event (non-blocking)
+        eventPublisher.publish(
+                new BookingConfirmedEvent(
+                        booking.getId(),
+                        user.getId(),
+                        show.getId(),
+                        showSeatIds,
+                        booking.getBookedAt()
+                )
+        );
+
+        return booking;
     }
 }

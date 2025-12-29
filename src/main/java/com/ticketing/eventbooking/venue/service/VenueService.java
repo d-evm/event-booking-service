@@ -16,13 +16,16 @@ public class VenueService {
 
     private final VenueRepository venueRepository;
     private final AuditoriumRepository auditoriumRepository;
+    private final SeatLayoutGenerator seatLayoutGenerator;
+
 
     public VenueService(
             VenueRepository venueRepository,
-            AuditoriumRepository auditoriumRepository
+            AuditoriumRepository auditoriumRepository, SeatLayoutGenerator seatLayoutGenerator
     ) {
         this.venueRepository = venueRepository;
         this.auditoriumRepository = auditoriumRepository;
+        this.seatLayoutGenerator = seatLayoutGenerator;
     }
 
     @Transactional
@@ -43,13 +46,18 @@ public class VenueService {
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new IllegalArgumentException("Venue not found"));
 
-        Auditorium auditorium = new Auditorium(
-                venue,
-                request.getName(),
-                request.getTotalRows(),
-                request.getTotalColumns()
+        Auditorium auditorium = auditoriumRepository.save(
+                new Auditorium(
+                        venue,
+                        request.getName(),
+                        request.getTotalRows(),
+                        request.getTotalColumns()
+                )
         );
 
-        return auditoriumRepository.save(auditorium);
+        seatLayoutGenerator.generateSeats(auditorium);
+
+        return auditorium;
     }
+
 }

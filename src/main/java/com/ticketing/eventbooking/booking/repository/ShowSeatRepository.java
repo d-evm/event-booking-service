@@ -16,9 +16,12 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
     @Query("""
         select ss from ShowSeat ss
         where ss.show.id = :showId
-        and ss.seat.id in :seatIds
+        and ss.id in :showSeatIds
         """)
-    List<ShowSeat> findAndLockSeats(UUID showId, List<UUID> seatIds);
+    List<ShowSeat> findAndLockSeats(
+            UUID showId,
+            List<UUID> showSeatIds
+    );
 
     List<ShowSeat> findByShowIdAndStatus(UUID showId, SeatStatus status);
 

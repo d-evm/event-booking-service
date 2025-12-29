@@ -38,4 +38,20 @@ public class Booking extends BaseEntity {
         this.seats = seats;
         this.bookedAt = Instant.now();
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public Show getShow() {
+        return show;
+    }
+
+    public Set<ShowSeat> getSeats() {
+        return seats;
+    }
+
+    public Instant getBookedAt() {
+        return bookedAt;
+    }
 }

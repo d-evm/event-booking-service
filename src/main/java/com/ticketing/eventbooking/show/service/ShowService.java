@@ -1,5 +1,6 @@
 package com.ticketing.eventbooking.show.service;
 
+import com.ticketing.eventbooking.booking.service.ShowSeatInitializer;
 import com.ticketing.eventbooking.event.model.Event;
 import com.ticketing.eventbooking.event.repository.EventRepository;
 import com.ticketing.eventbooking.show.dto.CreateShowRequest;
@@ -20,16 +21,20 @@ public class ShowService {
     private final ShowRepository showRepository;
     private final EventRepository eventRepository;
     private final AuditoriumRepository auditoriumRepository;
+    private final ShowSeatInitializer showSeatInitializer;
 
     public ShowService(
             ShowRepository showRepository,
             EventRepository eventRepository,
-            AuditoriumRepository auditoriumRepository
+            AuditoriumRepository auditoriumRepository,
+            ShowSeatInitializer showSeatInitializer
     ) {
         this.showRepository = showRepository;
         this.eventRepository = eventRepository;
         this.auditoriumRepository = auditoriumRepository;
+        this.showSeatInitializer = showSeatInitializer;
     }
+
 
     @Transactional
     public Show create(CreateShowRequest request) {
@@ -54,9 +59,15 @@ public class ShowService {
             throw new IllegalStateException("Show overlaps with existing show");
         }
 
-        Show show = new Show(event, auditorium, start, end);
-        return showRepository.save(show);
+        Show show = showRepository.save(
+                new Show(event, auditorium, start, end)
+        );
+
+        showSeatInitializer.initializeSeatsForShow(show);
+
+        return show;
     }
+
 
     @Transactional(readOnly = true)
     public List<Show> getByEvent(UUID eventId) {

@@ -33,3 +33,4 @@ logging:
   level:
     root: INFO
     org.springframework.security: INFO
+    org.springframework.cache: DEBUG

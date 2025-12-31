@@ -8,6 +8,8 @@ import com.ticketing.eventbooking.show.model.Show;
 import com.ticketing.eventbooking.show.repository.ShowRepository;
 import com.ticketing.eventbooking.venue.model.Auditorium;
 import com.ticketing.eventbooking.venue.repository.AuditoriumRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +37,7 @@ public class ShowService {
         this.showSeatInitializer = showSeatInitializer;
     }
 
-
+    @CacheEvict(value = "shows", allEntries = true)
     @Transactional
     public Show create(CreateShowRequest request) {
 
@@ -78,4 +80,10 @@ public class ShowService {
     public List<Show> getByCity(String city) {
         return showRepository.findByAuditoriumVenueCityIgnoreCase(city);
     }
+
+    @Cacheable(value = "shows", key = "#eventId")
+    public List<Show> getShowsByEvent(UUID eventId) {
+        return showRepository.findByEventId(eventId);
+    }
+
 }

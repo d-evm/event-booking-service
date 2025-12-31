@@ -3,6 +3,8 @@ package com.ticketing.eventbooking.event.service;
 import com.ticketing.eventbooking.event.dto.CreateEventRequest;
 import com.ticketing.eventbooking.event.model.Event;
 import com.ticketing.eventbooking.event.repository.EventRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +20,21 @@ public class EventService {
         this.repository = repository;
     }
 
-    @Transactional
-    public Event create(CreateEventRequest request) {
-
-        Event event = new Event(
-                request.getTitle(),
-                request.getDescription(),
-                request.getCategory(),
-                request.getLanguage(),
-                request.getGenre(),
-                request.getDurationMinutes(),
-                request.getRating()
-        );
-
-        return repository.save(event);
-    }
+//    @Transactional
+//    public Event create(CreateEventRequest request) {
+//
+//        Event event = new Event(
+//                request.getTitle(),
+//                request.getDescription(),
+//                request.getCategory(),
+//                request.getLanguage(),
+//                request.getGenre(),
+//                request.getDurationMinutes(),
+//                request.getRating()
+//        );
+//
+//        return repository.save(event);
+//    }
 
     @Transactional(readOnly = true)
     public List<Event> getActiveEvents() {
@@ -45,4 +47,32 @@ public class EventService {
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
         event.deactivate();
     }
+
+    @Cacheable("events")
+    public List<Event> getAllEvents() {
+        return repository.findAll();
+    }
+
+    @Cacheable(value = "event", key = "#eventId")
+    public Event getEventById(UUID eventId) {
+        return repository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+    }
+
+    @CacheEvict(value = {"events", "event"}, allEntries = true)
+    public Event create(CreateEventRequest request) {
+        return repository.save(
+                new Event(
+                        request.getTitle(),
+                        request.getDescription(),
+                        request.getCategory(),
+                        request.getLanguage(),
+                        request.getGenre(),
+                        request.getDurationMinutes(),
+                        request.getRating()
+                )
+        );
+    }
+
+
 }

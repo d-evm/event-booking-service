@@ -1,6 +1,7 @@
 package com.ticketing.eventbooking.event.service;
 
 import com.ticketing.eventbooking.event.dto.CreateEventRequest;
+import com.ticketing.eventbooking.event.dto.EventResponse;
 import com.ticketing.eventbooking.event.model.Event;
 import com.ticketing.eventbooking.event.repository.EventRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,21 +37,27 @@ public class EventService {
 //        return repository.save(event);
 //    }
 
+    @Cacheable("events")
     @Transactional(readOnly = true)
     public List<Event> getActiveEvents() {
         return repository.findByActiveTrue();
     }
 
+    @Cacheable("events")
+    @Transactional(readOnly = true)
+    public List<EventResponse> getActiveEventsCached() {
+        return repository.findByActiveTrue()
+                .stream()
+                .map(EventResponse::new)
+                .toList();
+    }
+
+    @CacheEvict(value = "events", allEntries = true)
     @Transactional
     public void deactivate(UUID eventId) {
         Event event = repository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
         event.deactivate();
-    }
-
-    @Cacheable("events")
-    public List<Event> getAllEvents() {
-        return repository.findAll();
     }
 
     @Cacheable(value = "event", key = "#eventId")

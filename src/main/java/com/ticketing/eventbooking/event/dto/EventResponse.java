@@ -1,26 +1,23 @@
 package com.ticketing.eventbooking.event.dto;
 
 import com.ticketing.eventbooking.event.model.Event;
-import com.ticketing.eventbooking.event.model.EventCategory;
 
 import java.util.UUID;
 
 public class EventResponse {
 
-    private final UUID id;
-    private final String title;
-    private final String description;
-    private final EventCategory category;
-    private final String language;
-    private final String genre;
-    private final Integer durationMinutes;
-    private final String rating;
+    private UUID id;
+    private String title;
+    private String category;
+    private String language;
+    private String genre;
+    private int durationMinutes;
+    private String rating;
 
     public EventResponse(Event event) {
         this.id = event.getId();
         this.title = event.getTitle();
-        this.description = event.getDescription();
-        this.category = event.getCategory();
+        this.category = event.getCategory().name();
         this.language = event.getLanguage();
         this.genre = event.getGenre();
         this.durationMinutes = event.getDurationMinutes();
@@ -35,11 +32,7 @@ public class EventResponse {
         return title;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public EventCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
@@ -51,7 +44,7 @@ public class EventResponse {
         return genre;
     }
 
-    public Integer getDurationMinutes() {
+    public int getDurationMinutes() {
         return durationMinutes;
     }
 

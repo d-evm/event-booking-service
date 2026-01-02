@@ -19,9 +19,7 @@ public class EventController {
 
     @GetMapping("/events")
     public List<EventResponse> getEvents() {
-        return service.getActiveEvents()
-                .stream()
-                .map(EventResponse::new)
-                .collect(Collectors.toList());
+        return service.getActiveEventsCached();
     }
+
 }
